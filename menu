@@ -1,0 +1,193 @@
+-- Variables
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Player = game:GetService("Players").LocalPlayer
+local Character
+local Humanoid
+
+local LPH_JIT_ULTRA = function(a) return a end
+local LPH_JIT_MAX = function(a) return a end
+
+local offsetVector = Vector3.new(2,1,2)
+
+local partCache = {}
+
+local NoclipParams = OverlapParams.new()
+NoclipParams.FilterType = Enum.RaycastFilterType.Exclude
+
+local partCache = {}
+
+local QUERY_SIZE = Vector3.new(12, 18, 12)
+
+-- Toggles
+
+local WalkSpeedToggle = false
+local InfiniteJump = false
+local Noclip = false
+
+-- SetValues
+
+local WalkSpeed = 16
+
+-- ValueReset
+
+function UpdateCharacter(NewCharacter)
+Character = NewCharacter
+Root = Character:WaitForChild("HumanoidRootPart",5)
+Humanoid = Character:WaitForChild("Humanoid",5)
+NoclipParams.FilterDescendantsInstances = {Character}
+end
+
+Player.CharacterAdded:Connect(UpdateCharacter)
+UpdateCharacter(Player.Character)
+
+-- functions
+
+local function SetNoclip()
+	if Noclip == true then
+		Noclip = false
+	elseif Noclip == false then
+		Noclip = true
+	end
+end
+
+local function SetWalkSpeed(Value)
+	Humanoid.WalkSpeed = Value
+	WalkSpeed = Value
+end
+
+local function InfiniteJumpConnect()
+	if InfiniteJump then
+		Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end
+
+-- Connections
+
+UserInputService.JumpRequest:Connect(InfiniteJumpConnect)
+
+local function ApplyNoclip(parts)
+	for _, part in ipairs(parts) do
+		if not part:IsA("BasePart") then
+			continue
+		end
+
+		if not partCache[part] then
+			partCache[part] = {part.CanCollide, part.Transparency}
+			part.CanCollide = false
+			part.Transparency = math.max(part.Transparency, 0.5)
+		end
+	end
+end
+
+local function RestoreNoclip()
+	for part, data in pairs(partCache) do
+		if part and part.Parent then
+			part.CanCollide = data[1]
+			part.Transparency = data[2]
+		end
+		partCache[part] = nil
+	end
+end
+
+RunService.Stepped:Connect(LPH_JIT_MAX(function()
+	if not Noclip then
+		if next(partCache) then
+			RestoreNoclip()
+		end
+		return
+	end
+
+	if not Root then
+		return
+	end
+
+	local parts = workspace:GetPartBoundsInBox(
+		Root.CFrame,
+		QUERY_SIZE,
+		NoclipParams
+	)
+
+	ApplyNoclip(parts)
+end))
+
+
+-- MENU
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Karpizzzzzz/nwordhub/refs/heads/main/nwordhub.lua"))()
+local venyx = library.new("NIGGER HUB", 5013109572)
+
+-- themes
+local themes = {
+	Background = Color3.fromRGB(24, 24, 24),
+	Glow = Color3.fromRGB(0, 0, 0),
+	Accent = Color3.fromRGB(10, 10, 10),
+	LightContrast = Color3.fromRGB(20, 20, 20),
+	DarkContrast = Color3.fromRGB(14, 14, 14),  
+	TextColor = Color3.fromRGB(255, 255, 255)
+}
+
+-- first page
+local page = venyx:addPage("Main", 5012544693)
+local TogglesSection = page:addSection("Toggles")
+local OtherSection = page:addSection("Misc")
+
+TogglesSection:addToggle("Infinite Jump", nil, function(value)
+	if InfiniteJump == false then
+		InfiniteJump = true
+	elseif InfiniteJump == true then
+		InfiniteJump = false
+	end
+end)
+
+TogglesSection:addToggle("Noclip",nil,function(value)
+	SetNoclip()
+end)
+
+TogglesSection:addSlider("WalkSpeed", 16, 0, 200, function(value)
+	SetWalkSpeed(value)
+end)
+
+--[[section1:addButton("Button", function()
+print("Clicked")
+end)
+section1:addTextbox("Notification", "Default", function(value, focusLost)
+print("Input", value)
+
+if focusLost then
+venyx:Notify("Title", value)
+end
+end)
+
+section2:addColorPicker("ColorPicker", Color3.fromRGB(50, 50, 50))
+section2:addColorPicker("ColorPicker2")
+
+section2:addDropdown("Dropdown", {"Hello", "World", "Hello World", "Word", 1, 2, 3})
+section2:addDropdown("Dropdown", {"Hello", "World", "Hello World", "Word", 1, 2, 3}, function(text)
+print("Selected", text)
+end)
+section2:addButton("Button")]]
+
+-- second page
+local theme = venyx:addPage("Theme", 5012544693)
+local colors = theme:addSection("Colors")
+
+for theme, color in pairs(themes) do -- all in one theme changer, i know, im cool
+	colors:addColorPicker(theme, color, function(color3)
+		venyx:setTheme(theme, color3)
+	end)
+end
+
+-- Configs Page
+local configspage = venyx:addPage("Configs",1)
+local configs = configspage:addSection("Configs")
+
+configs:addKeybind("Toggle Menu",Enum.KeyCode.End,function()
+	venyx:toggle()
+end)
+
+
+
+-- load
+venyx:SelectPage(venyx.pages[1], true)
